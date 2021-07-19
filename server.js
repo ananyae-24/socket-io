@@ -49,15 +49,15 @@ io.on("connection", (client) => {
   client.on("move", async (data) => {
     let state = data.state;
 
-    // if (state.id_to_play === "player1") {
-    //   state.id_to_play = "player2";
-    // } else {
-    //   state.id_to_play = "player1";
-    // }
+    if (state.id_to_play === "player1") {
+      state.id_to_play = "player2";
+    } else {
+      state.id_to_play = "player1";
+    }
     let gameid = data.gameid;
     let game = await controller.saveMove(state, gameid);
     if (game) {
-      client.emit("move", state);
+      // client.emit("move", state);
       client.broadcast.to(game.room).emit("move", state);
     }
   });
