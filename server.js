@@ -30,9 +30,9 @@ app.use(function (req, res, next) {
 let server = http.createServer(app);
 let io = socketio(server, {
   transports: ["websocket", "polling", "flashsocket"],
-  // cors: {
-  //   origin: "*",
-  // },
+  cors: {
+    origin: "*",
+  },
 });
 io.on("connection", (client) => {
   client.emit("init", client.id);
