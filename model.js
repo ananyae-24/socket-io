@@ -18,7 +18,7 @@ const schema = new mongoose.Schema(
   }
 );
 schema.methods.assignroom = async function () {
-  const token = crypto.randomBytes(10).toString("hex");
+  const token = crypto.randomBytes(5).toString("hex");
   this.room = token;
   return token;
 };

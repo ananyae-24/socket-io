@@ -41,14 +41,15 @@ let io = socketio(server, {
 io.on("connection", (client) => {
   client.emit("init", client.id);
   client.on("random_join", async (msg) => {
-    let [game, meg] = await controller.random_play(msg, client.id);
+    let [game, meg] = await controller.random_play(msg, msg.id);
+    console.log("joined room", game.room);
     client.join(game.room);
-    client.emit(meg, game);
-    client.broadcast.to(game.room).emit(meg, game);
+    io.in(game.room).emit(meg, game);
   });
   client.on("move", async (data) => {
+    console.log(client.rooms);
     let state = data.state;
-
+    console.log(state);
     if (state.id_to_play === "player1") {
       state.id_to_play = "player2";
     } else {
@@ -56,47 +57,40 @@ io.on("connection", (client) => {
     }
     let gameid = data.gameid;
     let game = await controller.saveMove(state, gameid);
-    if (game) {
-      // client.emit("move", state);
-      client.broadcast.to(game.room).emit("move", state);
+    // console.log(game);
+    if (game.room) {
+      io.in(game.room).emit("move", state);
     }
   });
   client.on("over", async (data) => {
     let game = await controller.winner(data.winner, data.gameid);
-    // console.log(data.message);
+    console.log("over");
     if (game) {
       client.emit("over", data.message);
+
       client.broadcast.to(game.room).emit("over", data.message);
     }
   });
   client.on("leave", async (data) => {
+    console.log("leave");
     await leaveroom(client, data);
   });
-  client.on("disconnect", async () => {
-    await forceleave(client);
+  client.on("disconnecting", () => {
+    console.log("disconnect");
   });
 });
-async function leaveroom(socket, gameid) {
-  let game = await controller.closegame(gameid);
+async function leaveroom(socket, data, io) {
+  let game = await controller.closegame(data.gameid);
   if (game) {
     socket.broadcast
       .to(game.room)
       .emit(
         "leave",
-        `${socket.id == game.id_player_1 ? "Player1" : "Player2"} left the room`
+        `${
+          data.id_of_playerleft == game.id_player_1 ? "Player1" : "Player2"
+        } left the room`
       );
     socket.leave(game.room);
-  }
-}
-async function forceleave(socket) {
-  let game = await controller.forceclose(socket.id);
-  if (game) {
-    socket.broadcast
-      .to(game.room)
-      .emit(
-        "over",
-        `${socket.id == game.id_player_1 ? "Player1" : "Player2"} left the room`
-      );
   }
 }
 server.listen(process.env.PORT, () => {

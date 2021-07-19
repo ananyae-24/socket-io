@@ -12,6 +12,7 @@ exports.random_play = async (msg, id) => {
     over: false,
     code: "none",
   });
+
   let msg_;
   if (!game) {
     game = await Data.create({ player1: msg.name, id_player_1: id });
