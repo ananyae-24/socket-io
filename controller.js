@@ -38,25 +38,28 @@ exports.saveMove = async (move, game_id) => {
     return t;
   } else return null;
 };
-// exports.friend_play = catchAsync(async (msg, id) => {
-//   let game;
-//   if (msg.code) {
-//     game = await Data.findOne({ over: false, code: msg.code });
-//     if (game) {
-//       game.player2 = msg.name;
-//       game.id_player_2 = id;
-//       await game.save();
-//       return [game._id, 0];
-//     } else {
-//       return ["err", 0];
-//     }
-//   } else {
-//     game = await Data.create({ player1: msg.name, id_player_1: id });
-//     let token = await game.setcode();
-//     await game.save();
-//     return [game._id, token];
-//   }
-// });
+exports.friend_play = async (data) => {
+  await Data.findOneAndDelete({
+    over: false,
+    id_player_1: data.id,
+  });
+  let game = await Data.create({ player1: data.name, id_player_1: data.id });
+  await game.assignroom();
+  let token = await game.setcode();
+  await game.save();
+  msg_ = "friend_join";
+  return { token, game };
+};
+exports.friend_join = async (data) => {
+  let game = await Data.findOne({ code: data.token, over: false });
+  if (game) {
+    game.id_player_2 = data.id;
+    game.player2 = data.name;
+    await game.save();
+    return [game, "Start game"];
+  }
+  return null;
+};
 exports.closegame = async (id, winner) => {
   let game = await Data.findById(id);
   if (game) {

@@ -39,6 +39,7 @@ let io = socketio(server, {
   },
 });
 io.on("connection", (client) => {
+  /////////////////////////////
   client.emit("init", client.id);
   client.on("random_join", async (msg) => {
     let [game, meg] = await controller.random_play(msg, msg.id);
@@ -46,6 +47,18 @@ io.on("connection", (client) => {
     client.join(game.room);
     io.in(game.room).emit(meg, game);
   });
+  ///////////////////
+  client.on("friend", async (data) => {
+    let newdata = await controller.friend_play(data);
+    client.join(newdata.game.room);
+    io.in(newdata.game.room).emit("Code to the friend", newdata);
+  });
+  client.on("friend_join", async (data) => {
+    let [game, meg] = await controller.friend_join(data);
+    client.join(game.room);
+    io.in(game.room).emit(meg, game);
+  });
+  /////////////////////////////
   client.on("move", async (data) => {
     console.log(client.rooms);
     let state = data.state;
@@ -62,6 +75,7 @@ io.on("connection", (client) => {
       io.in(game.room).emit("move", state);
     }
   });
+  ///////////////////////////
   client.on("over", async (data) => {
     let game = await controller.winner(data.winner, data.gameid);
     console.log("over");
@@ -75,8 +89,11 @@ io.on("connection", (client) => {
     console.log("leave");
     await leaveroom(client, data);
   });
+  /////////////////
   client.on("disconnecting", () => {
-    console.log("disconnect");
+    client.rooms.forEach((el) => {
+      io.in(el).emit("over", "The other player has left the room");
+    });
   });
 });
 async function leaveroom(socket, data, io) {
