@@ -91,3 +91,10 @@ exports.winner = async (winner, gameid) => {
     return game;
   } else return null;
 };
+exports.closeroom = async (room) => {
+  let game = await Data.findOne({ room });
+  if (game) {
+    game.over = true;
+    await game.save();
+  }
+};

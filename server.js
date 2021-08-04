@@ -91,7 +91,8 @@ io.on("connection", (client) => {
   });
   /////////////////
   client.on("disconnecting", () => {
-    client.rooms.forEach((el) => {
+    client.rooms.forEach(async (el) => {
+      controller.closeroom(el);
       io.in(el).emit("over", "The other player has left the room");
     });
   });
